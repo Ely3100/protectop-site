@@ -140,7 +140,11 @@ version, **recalculer le hash SRI** correspondant.
 
 ## 5. Accessibilité & performance
 
-- **`prefers-reduced-motion`** respecté : smooth scroll, curseur, WebGL et reveals sont
+- **Intro cinématique** (séquence de déverrouillage : remplissage de l'arc 0→100 %, rotation
+  de la serrure, ouverture de l'écran en deux) gérée dans `js/main.js › initPreloader()`. Elle
+  est **désactivée en `prefers-reduced-motion`** et protégée par un garde-fou (l'overlay est
+  retiré au bout de 5 s quoi qu'il arrive — jamais de page bloquée).
+- **`prefers-reduced-motion`** respecté : intro, smooth scroll, curseur, WebGL et reveals sont
   désactivés, le contenu reste pleinement visible.
 - **Sans JavaScript** : tout le contenu reste lisible (les animations ne font que révéler).
 - Navigation **clavier** (focus visible, skip link), **ARIA** sur les zones dynamiques,

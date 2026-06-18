@@ -101,6 +101,28 @@
 <body>
   <a class="skip-link" href="#main">Aller au contenu</a>
 
+  <!-- ============================== INTRO CINÉMATIQUE ==============================
+       Séquence de déverrouillage. Affichée uniquement si JS actif (html.js),
+       désactivée en prefers-reduced-motion. Fallback dur : retirée au bout de 5 s. -->
+  <div class="preloader" data-preloader aria-hidden="true">
+    <div class="preloader__panel preloader__panel--top"></div>
+    <div class="preloader__panel preloader__panel--bottom"></div>
+    <div class="preloader__center">
+      <svg class="preloader__lock" viewBox="0 0 120 120" fill="none" aria-hidden="true" focusable="false">
+        <circle class="preloader__track" cx="60" cy="60" r="54" stroke-width="2" />
+        <circle class="preloader__arc" data-preloader-arc cx="60" cy="60" r="54" stroke-width="2"
+                stroke-linecap="round" transform="rotate(-90 60 60)"
+                stroke-dasharray="339.292" stroke-dashoffset="339.292" />
+        <g class="preloader__keyhole" data-preloader-keyhole stroke="currentColor" stroke-width="2.6">
+          <circle cx="60" cy="55" r="8.5" fill="none" />
+          <path d="M60 63 L54.5 76 H65.5 Z" fill="currentColor" stroke="none" />
+        </g>
+      </svg>
+      <p class="preloader__brand">Protectop<span class="brand__dot">.</span></p>
+      <p class="preloader__pct"><span data-preloader-pct>00</span><span aria-hidden="true">%</span></p>
+    </div>
+  </div>
+
   <!-- Curseur personnalisé (masqué au clavier / tactile / reduced-motion) -->
   <div class="cursor" aria-hidden="true" data-cursor>
     <span class="cursor__dot"></span>

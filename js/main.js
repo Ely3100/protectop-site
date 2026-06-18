@@ -127,15 +127,17 @@
   }
 
   function initReveals() {
-    if (!hasGSAP || prefersReduced) { forceVisible(); return; }
+    if (!hasGSAP || prefersReduced) { forceVisible(); return null; }
     var gsap = window.gsap;
     if (hasST) gsap.registerPlugin(window.ScrollTrigger);
 
     // Héros : entrée scénarisée.
+    // Timeline mise en PAUSE : elle est jouée par l'intro (initPreloader) une fois
+    // le déverrouillage terminé, pour synchroniser le reveal avec l'ouverture de l'écran.
     // On utilise fromTo (fin à opacity:1) pour garantir l'état final
     // quelle que soit la valeur CSS de départ (.js [data-reveal]{opacity:0}).
     var heroWords = splitHeroTitle();
-    var tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    var tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
     tl.fromTo(".hero__eyebrow", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 });
     if (heroWords.length) {
       tl.from(heroWords, { yPercent: 115, duration: 0.9, stagger: 0.06 }, "-=0.35");
@@ -168,6 +170,66 @@
     } else {
       forceVisible();
     }
+
+    return tl; // timeline héros (en pause) jouée par l'intro
+  }
+
+  /* ============================================================
+     3bis. Intro cinématique — séquence de déverrouillage
+     ============================================================ */
+  function initPreloader(onDone) {
+    var pre = $("[data-preloader]");
+    var done = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      document.documentElement.classList.remove("preloading");
+      if (lenis) { try { lenis.start(); } catch (e) {} }
+      if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
+      if (typeof onDone === "function") { try { onDone(); } catch (e) {} }
+    }
+
+    // Pas d'intro : pas d'élément, pas de GSAP, ou mouvement réduit → on révèle direct.
+    if (!pre || !hasGSAP || prefersReduced) { finish(); return; }
+
+    var gsap = window.gsap;
+    var arc = $("[data-preloader-arc]", pre);
+    var pct = $("[data-preloader-pct]", pre);
+    var keyhole = $("[data-preloader-keyhole]", pre);
+    var CIRC = 339.292; // 2π·54
+    var counter = { v: 0 };
+
+    // Verrouille le scroll et repart du haut pendant l'intro
+    document.documentElement.classList.add("preloading");
+    if (lenis) { try { lenis.stop(); } catch (e) {} }
+    if ("scrollRestoration" in history) { try { history.scrollRestoration = "manual"; } catch (e) {} }
+    window.scrollTo(0, 0);
+
+    // Garde-fou : l'overlay disparaît quoi qu'il arrive au bout de 5 s
+    var failSafe = setTimeout(finish, 5000);
+
+    var tl = gsap.timeline({
+      onComplete: function () { clearTimeout(failSafe); finish(); }
+    });
+
+    tl.to(counter, {
+      v: 100, duration: 1.7, ease: "power2.inOut",
+      onUpdate: function () {
+        var n = Math.round(counter.v);
+        if (pct) pct.textContent = (n < 10 ? "0" : "") + n;
+        if (arc) arc.setAttribute("stroke-dashoffset", String(CIRC * (1 - n / 100)));
+      }
+    })
+      // Déclic : la serrure tourne pour déverrouiller
+      .to(keyhole, { rotation: 90, duration: 0.55, ease: "back.out(1.8)", transformOrigin: "50% 50%" }, "-=0.05")
+      // Petit "punch" de validation
+      .to(".preloader__lock", { scale: 1.07, duration: 0.12, transformOrigin: "50% 50%" }, ">-0.06")
+      .to(".preloader__lock", { scale: 1, duration: 0.22, ease: "power2.out", transformOrigin: "50% 50%" })
+      // L'écran s'ouvre en deux et révèle le hero
+      .to(".preloader__center", { opacity: 0, duration: 0.35, ease: "power2.out" }, "-=0.05")
+      .to(".preloader__panel--top", { yPercent: -100, duration: 0.85, ease: "power4.inOut" }, "<")
+      .to(".preloader__panel--bottom", { yPercent: 100, duration: 0.85, ease: "power4.inOut" }, "<");
   }
 
   // Compteurs animés
@@ -639,15 +701,20 @@
      Boot
      ============================================================ */
   function boot() {
+    var heroTL = null;
     try { initChrome(); } catch (e) {}
     try { initSmoothScroll(); } catch (e) {}
     try { initAnchors(); } catch (e) {}
-    try { initReveals(); } catch (e) { forceVisible(); }
+    try { heroTL = initReveals(); } catch (e) { forceVisible(); }
     try { initCursor(); } catch (e) {}
     try { initMagnetic(); } catch (e) {}
     try { initHeroScene(); } catch (e) {}
     try { initMap(); } catch (e) {}
     try { initForm(); } catch (e) {}
+
+    // L'intro joue le reveal du hero à la fin du déverrouillage.
+    var playHero = function () { if (heroTL) { try { heroTL.play(); } catch (e) {} } };
+    try { initPreloader(playHero); } catch (e) { playHero(); }
   }
 
   // Nettoyage global (navigation / fermeture)
