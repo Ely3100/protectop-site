@@ -1,0 +1,12 @@
+# Outils locaux / preview
+.claude/
+
+# Dépendances (aucune ici, mais par sécurité)
+node_modules/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
